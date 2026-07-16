@@ -1,0 +1,47 @@
+.stApp{
+    background:#0f1117;
+}
+
+.block-container{
+    padding-top:1rem;
+}
+
+.movie-card{
+    border-radius:18px;
+    background:#1b1d24;
+    padding:18px;
+    box-shadow:0 6px 25px rgba(0,0,0,.35);
+    transition:.3s;
+}
+
+.movie-card:hover{
+    transform:translateY(-5px);
+}
+
+.similarity{
+    color:#6BE675;
+    font-weight:bold;
+    font-size:18px;
+}
+
+.title{
+    font-size:22px;
+    font-weight:700;
+}
+
+.genre{
+    color:#ffb84d;
+}
+
+.overview{
+    color:#d7d7d7;
+}
+
+.poster{
+    border-radius:15px;
+}
+
+hr{
+    border:none;
+    border-top:1px solid #333;
+}
