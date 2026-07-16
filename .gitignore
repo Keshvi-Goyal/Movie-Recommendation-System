@@ -1,0 +1,41 @@
+# Virtual Environment
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Model files (generated later)
+models/*.pkl
+models/*.joblib
+
+# Logs
+*.log
+
+# Streamlit cache
+.streamlit/secrets.toml
+
+# Build files
+build/
+dist/
+
+# Python packaging
+*.egg-info/
