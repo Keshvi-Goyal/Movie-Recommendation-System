@@ -15,7 +15,7 @@ from src.components import (
 # ==========================================================
 
 st.set_page_config(
-    page_title="🎬 CineMatch AI",
+    page_title="🎬 MOVIE RECOMMENDATION SYSTEM",
     page_icon="🎬",
     layout="wide",
     initial_sidebar_state="expanded"
