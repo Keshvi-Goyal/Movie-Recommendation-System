@@ -11,7 +11,7 @@ def render_header():
         """
         <div style='text-align:center;padding:20px 0 10px 0'>
             <h1 style='font-size:3rem;margin-bottom:0;'>
-                🎬 CineMatch AI
+                🎬 MOVIE RECOMMENDATION SYSTEM
             </h1>
 
             <p style='font-size:18px;color:#9ca3af;'>
