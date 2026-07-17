@@ -122,7 +122,17 @@ git clone https://github.com/YOUR_USERNAME/Movie_Recommendation_System.git
 
 cd Movie_Recommendation_System
 ```
+## Model Files
 
+The trained model files are not included in this repository because some generated artifacts (such as the precomputed similarity matrix) exceed GitHub's file size limit.
+
+To run the application locally, generate the model files by executing:
+
+```bash
+python src/train.py
+```
+
+This will create the required files inside the `models/` directory.
 ---
 
 ## Create Virtual Environment
