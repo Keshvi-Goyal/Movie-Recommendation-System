@@ -41,7 +41,7 @@ def render_sidebar():
 
         st.info(
             """
-Hybrid Recommendation Engine
+Content-Based Recommendation Engine
 
 ✅ TF-IDF
 
