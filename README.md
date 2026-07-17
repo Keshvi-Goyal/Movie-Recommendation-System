@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🎬 CineMatch AI
 
 A basic **Content-Based Movie Recommendation System** built using **TF-IDF**, **weighted movie metadata**, and **cosine similarity**. The application provides explainable movie recommendations through an interactive **Streamlit** interface while using the **TMDB API** to fetch movie posters and additional metadata.
@@ -271,3 +272,6 @@ This project is licensed under the MIT License.
 B.Tech Mathematics & Computing
 
 Interested in Machine Learning, Data Science and Quantitative Finance.
+=======
+# Movie-Recommendation-System
+>>>>>>> 1432f9984fddd9b4098a39e99d25e37d6c951b6e
