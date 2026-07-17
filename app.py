@@ -3,71 +3,166 @@ import pandas as pd
 
 from src.recommender import recommend
 from src.utils import get_movie_metadata
+from src.components import (
+    render_header,
+    render_sidebar,
+    render_selected_movie,
+    render_movie_card,
+)
+
+# ==========================================================
+# PAGE CONFIG
+# ==========================================================
 
 st.set_page_config(
-    page_title="Movie Recommendation System",
+    page_title="🎬 CineMatch AI",
     page_icon="🎬",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-with open("assets/style.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+# ==========================================================
+# LOAD CSS
+# ==========================================================
 
-movies = pd.read_pickle("models/movies.pkl")
+with open("assets/style.css") as css:
+    st.markdown(
+        f"<style>{css.read()}</style>",
+        unsafe_allow_html=True
+    )
 
-st.title("🎬 CineMatch AI")
+# ==========================================================
+# SESSION STATE
+# ==========================================================
 
-st.caption("Discover movies you'll love.")
+if "history" not in st.session_state:
+    st.session_state.history = []
 
-movie_name = st.selectbox(
-    "Search Movie",
-    sorted(movies["title"].unique())
-)
+if "favorites" not in st.session_state:
+    st.session_state.favorites = []
 
-if st.button("Recommend Movies", use_container_width=True):
+# ==========================================================
+# LOAD DATA
+# ==========================================================
 
-    recommendations = recommend(movie_name)
+@st.cache_data
+def load_movies():
+    return pd.read_pickle("models/movies.pkl")
 
-    st.success(f"Top {len(recommendations)} recommendations")
+movies = load_movies()
 
-    for movie in recommendations:
+# ==========================================================
+# SIDEBAR
+# ==========================================================
+
+render_sidebar()
+
+# ==========================================================
+# HEADER
+# ==========================================================
+
+render_header()
+
+st.markdown("---")
+
+# ==========================================================
+# SEARCH SECTION
+# ==========================================================
+
+left, right = st.columns([5, 1])
+
+with left:
+
+    movie_name = st.selectbox(
+        "Search Movie",
+        sorted(movies["title"].unique()),
+        label_visibility="collapsed",
+        index=None,
+        placeholder="🔍 Search for a movie..."
+    )
+
+with right:
+
+    recommend_btn = st.button(
+        "🎯 Recommend",
+        use_container_width=True
+    )
+
+# ==========================================================
+# EMPTY PAGE
+# ==========================================================
+
+if movie_name is None:
+
+    st.info("👈 Search for a movie and click **Recommend** to discover similar movies.")
+
+    st.stop()
+
+# ==========================================================
+# RECOMMENDATION
+# ==========================================================
+
+if recommend_btn:
+
+    with st.spinner("Finding similar movies..."):
+
+        selected_id = movies.loc[
+            movies["title"] == movie_name,
+            "movie_id"
+        ].values[0]
+
+        selected_meta = get_movie_metadata(selected_id)
+
+        recommendations = recommend(movie_name)
+
+        # Save history
+        if movie_name not in st.session_state.history:
+            st.session_state.history.insert(0, movie_name)
+
+    st.success(f"Found {len(recommendations)} recommendations")
+
+    # ======================================================
+    # Selected Movie
+    # ======================================================
+
+    render_selected_movie(selected_meta)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    st.subheader("🍿 Recommended Movies")
+
+    # ======================================================
+    # Recommendation Grid
+    # ======================================================
+
+    cols = st.columns(4)
+
+    for index, movie in enumerate(recommendations):
 
         meta = get_movie_metadata(movie["movie_id"])
 
-        col1, col2 = st.columns([1,2])
+        with cols[index % 4]:
 
-        with col1:
+            render_movie_card(movie, meta)
 
-            if meta and meta["poster"]:
-                st.image(meta["poster"], use_container_width=True)
+# ==========================================================
+# HISTORY
+# ==========================================================
 
-        with col2:
+if len(st.session_state.history) > 0:
 
-            st.markdown(
-                f"<div class='title'>{movie['title']}</div>",
-                unsafe_allow_html=True
+    st.markdown("---")
+
+    st.subheader("🕓 Recent Searches")
+
+    cols = st.columns(min(len(st.session_state.history), 5))
+
+    for i, movie in enumerate(st.session_state.history[:5]):
+
+        with cols[i]:
+
+            st.button(
+                movie,
+                key=f"history_{i}",
+                use_container_width=True
             )
-
-            st.markdown(
-                f"<div class='similarity'>Similarity : {movie['similarity']}%</div>",
-                unsafe_allow_html=True
-            )
-
-            if meta:
-
-                st.write("⭐", meta["rating"])
-                st.write("🎭", ", ".join(meta["genres"]))
-                st.write("📅", meta["release_date"][:4])
-                st.write("⏱", meta["runtime"], "mins")
-
-                st.markdown(meta["overview"])
-
-            st.write("👨‍🎤", ", ".join(movie["cast"][:3]))
-            st.write("🎬", movie["director"][0])
-
-            st.write("### Why Recommended?")
-
-            for reason in movie["reason"]:
-                st.success(reason)
-
-        st.divider()

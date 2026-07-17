@@ -1,23 +1,68 @@
-import pickle
-import pandas as pd
 import ast
+import pickle
 from pathlib import Path
+from typing import List, Dict
+
+# ==========================================================
+# Paths
+# ==========================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load trained files
-movies = pickle.load(open(BASE_DIR / "models" / "movies.pkl", "rb"))
-similarity = pickle.load(open(BASE_DIR / "models" / "similarity.pkl", "rb"))
+# ==========================================================
+# Load Models
+# ==========================================================
 
-# Convert string representations back to lists
-for col in ["genres", "keywords", "cast", "crew"]:
-    movies[col] = movies[col].apply(ast.literal_eval)
+with open(BASE_DIR / "models" / "movies.pkl", "rb") as f:
+    movies = pickle.load(f)
 
+with open(BASE_DIR / "models" / "similarity.pkl", "rb") as f:
+    similarity = pickle.load(f)
 
-def explain_recommendation(source_movie, recommended_movie):
+# ==========================================================
+# Convert String Columns to Lists
+# ==========================================================
+
+LIST_COLUMNS = ["genres", "keywords", "cast", "crew"]
+
+for col in LIST_COLUMNS:
+    movies[col] = movies[col].apply(
+        lambda x: ast.literal_eval(x) if isinstance(x, str) else x
+    )
+
+# ==========================================================
+# Match Label
+# ==========================================================
+
+def get_match_label(score: float) -> str:
     """
-    Explain why a movie was recommended.
+    Convert cosine similarity into a user-friendly label.
     """
+
+    percentage = score * 100
+
+    if percentage >= 35:
+        return "⭐⭐ Excellent Match"
+
+    elif percentage >= 25:
+        return "⭐ Very Good Match"
+
+    elif percentage >= 18:
+        return "👍 Good Match"
+
+    elif percentage >= 10:
+        return "🎬 Worth Watching"
+
+    return "🔍 Explore"
+
+# ==========================================================
+# Recommendation Explanation
+# ==========================================================
+
+def explain_recommendation(
+    source_movie: str,
+    recommended_movie: Dict
+) -> List[str]:
 
     source = movies[
         movies["title"].str.lower() == source_movie.lower()
@@ -25,42 +70,65 @@ def explain_recommendation(source_movie, recommended_movie):
 
     reasons = []
 
-    # Common genres
-    common_genres = set(source["genres"]).intersection(
-        set(recommended_movie["genres"])
+    # ------------------------------------------------------
+
+    common_genres = list(
+        set(source["genres"]).intersection(
+            set(recommended_movie["genres"])
+        )
     )
 
     if common_genres:
-        reasons.append(
-            "Similar genres: " +
-            ", ".join(sorted(common_genres)[:3])
-        )
+        reasons.append("✓ Similar Genres")
 
-    # Common keywords
-    common_keywords = set(source["keywords"]).intersection(
-        set(recommended_movie["keywords"])
+    # ------------------------------------------------------
+
+    common_keywords = list(
+        set(source["keywords"]).intersection(
+            set(recommended_movie["keywords"])
+        )
     )
 
     if common_keywords:
-        reasons.append(
-            "Shared themes: " +
-            ", ".join(sorted(common_keywords)[:3])
-        )
+        reasons.append("✓ Shared Themes")
 
-    # Same director
-    if len(set(source["crew"]).intersection(set(recommended_movie["director"]))) > 0:
-        reasons.append("Same Director")
+    # ------------------------------------------------------
+
+    common_cast = list(
+        set(source["cast"]).intersection(
+            set(recommended_movie["cast"])
+        )
+    )
+
+    if common_cast:
+        reasons.append("✓ Common Cast")
+
+    # ------------------------------------------------------
+
+    common_director = list(
+        set(source["crew"]).intersection(
+            set(recommended_movie["director"])
+        )
+    )
+
+    if common_director:
+        reasons.append("✓ Same Director")
+
+    # ------------------------------------------------------
 
     if not reasons:
-        reasons.append("High overall content similarity")
+        reasons.append("✓ High Content Similarity")
 
     return reasons
 
+# ==========================================================
+# Recommendation Engine
+# ==========================================================
 
-def recommend(movie_name, top_n=10):
-    """
-    Returns top_n similar movies.
-    """
+def recommend(
+    movie_name: str,
+    top_n: int = 10
+) -> List[Dict]:
 
     movie_index = movies[
         movies["title"].str.lower() == movie_name.lower()
@@ -77,7 +145,7 @@ def recommend(movie_name, top_n=10):
         enumerate(similarity_scores),
         key=lambda x: x[1],
         reverse=True
-    )[1:top_n + 1]
+    )[1: top_n + 1]
 
     recommendations = []
 
@@ -85,26 +153,39 @@ def recommend(movie_name, top_n=10):
 
         movie = movies.iloc[idx]
 
-        movie_dict = {
+        recommendation = {
+
             "movie_id": int(movie["movie_id"]),
+
             "title": movie["title"],
+
             "genres": movie["genres"],
+
             "keywords": movie["keywords"],
+
             "cast": movie["cast"],
+
             "director": movie["crew"],
-            "similarity": round(float(score) * 100, 2)
+
+            "similarity_raw": float(score),
+
+            "similarity": round(score * 100, 2),
+
+            "match_label": get_match_label(score)
         }
 
-        # Add explanation
-        movie_dict["reason"] = explain_recommendation(
+        recommendation["reason"] = explain_recommendation(
             movie_name,
-            movie_dict
+            recommendation
         )
 
-        recommendations.append(movie_dict)
+        recommendations.append(recommendation)
 
     return recommendations
 
+# ==========================================================
+# Testing
+# ==========================================================
 
 if __name__ == "__main__":
 
@@ -112,21 +193,25 @@ if __name__ == "__main__":
 
     for movie in recommendations:
 
-        print("=" * 60)
+        print("=" * 70)
 
         print(movie["title"])
 
         print(f"Similarity : {movie['similarity']}%")
 
-        print(f"Genres     : {', '.join(movie['genres'])}")
+        print(movie["match_label"])
 
-        print(f"Director   : {', '.join(movie['director'])}")
+        print("Genres :", ", ".join(movie["genres"]))
 
-        print(f"Cast       : {', '.join(movie['cast'][:3])}")
+        print("Director :", ", ".join(movie["director"]))
+
+        print("Cast :", ", ".join(movie["cast"][:3]))
+
+        print()
 
         print("Why Recommended?")
 
         for reason in movie["reason"]:
-            print(f"• {reason}")
+            print("•", reason)
 
         print()
