@@ -33,7 +33,7 @@ def render_sidebar():
 
     with st.sidebar:
 
-        st.title("🎬 CineMatch AI")
+        st.title("🎬 MOVIE RECOMMENDATION SYSTEM")
 
         st.markdown("---")
 
